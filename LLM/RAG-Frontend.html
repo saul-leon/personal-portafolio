@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #sidebar-chats {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 250px;
+            background: #f8f9fa;
+            border-right: solid 1px #ced1d5;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        #panel-chats > button {
+            width: 100%;
+            margin: 0 0 8px 0;
+        }
+
+        #sidebar-snippets {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            width: 420px;
+            border-left: solid 1px #ced1d5;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        #sidebar-snippets > .card {
+            margin: 0 0 8px 0;
+        }
+
+        #panel-chat {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 250px;
+            right: 420px;
+        }
+
+        #panel-messages {
+            position: absolute;
+            top: 0;
+            bottom: 150px;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        #panel-input {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 8px;
+            text-align: right;
+        }
+
+        #input-message {
+            margin-bottom: 8px;
+        }
+
+        .message-user,
+        .message-assistant {
+            padding: 8px 16px;
+        }
+
+        .message-user {
+            border-radius: 8px;
+            background: #cff4fc;
+            border: solid 1px #b6effb;
+        }
+
+        .message-assistant-tools {
+            text-align: right;
+        }
+    </style>
+    <title>RAG Client</title>
+</head>
+
+<body>
+    <div id="sidebar-chats">
+        <div id="panel-chats"></div>
+        <button type="button" class="btn btn-light" id="button-new-chat"><i data-feather="plus-circle"></i></button>
+    </div>
+
+    <div id="sidebar-snippets"></div>
+
+    <div id="panel-chat">
+        <div id="panel-messages"></div>
+        <div id="panel-input">
+            <textarea class="form-control" id="input-message" rows="3"></textarea>
+            <button type="button" class="btn btn-light" id="button-settings"><i data-feather="settings"></i></button>
+            <button type="button" class="btn btn-light" id="button-mic"><i data-feather="mic"></i></button>
+            <button type="button" class="btn btn-primary" id="button-send"><i data-feather="send"></i></button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script>
+        let Client = {
+
+            element: {
+                chats: document.getElementById('panel-chats'),
+                snippets: document.getElementById('sidebar-snippets'),
+                messages: document.getElementById('panel-messages'),
+                input: document.getElementById('input-message')
+            },
+
+            activeChat: -1,
+
+            chats: [ ],
+
+            render: {
+
+                chat: indexChat => {
+
+                    let html = Client.chats[ indexChat ].messages.map((message, index) => {
+
+                        if( message.role == 'user' ){
+
+                            return [
+                                '<div class="message-user">',
+                                    '<div>', message.content ,'</div>',
+                                '</div>'
+                            ].join('');
+
+                        } else {
+
+                            return [
+                                '<div class="message-assistant">',
+                                    '<div>', marked.parse( message.content ) ,'</div>',
+                                    '<div class="message-assistant-tools">',
+                                        '<div class="btn-group" role="group">',
+                                            '<button type="button" class="btn btn-light btn-sm" onclick="Client.action.message.speak(', indexChat ,', ', index ,')"><i data-feather="volume-2"></i></button>',
+                                            '<button type="button" class="btn btn-light btn-sm" onclick="Client.action.message.copy(', indexChat ,', ', index ,')"><i data-feather="copy"></i></button>',
+                                            '<button type="button" class="btn btn-light btn-sm" onclick="Client.action.message.feedback(', indexChat ,', ', index ,', -1)"><i data-feather="thumbs-down"></i></button>',
+                                            '<button type="button" class="btn btn-light btn-sm" onclick="Client.action.message.feedback(', indexChat ,', ', index ,', 1)"><i data-feather="thumbs-up"></i></button>',
+                                        '</div>',
+                                    '</div>',
+                                '</div>'
+                            ].join('');
+
+                        }
+
+                    });
+
+                    Client.element.messages.innerHTML = html.join('');
+                    feather.replace(); // Ico render
+                },
+
+                sessions: () => {
+                    let html = Client.chats.map( (session, index) => {
+
+                        if( index == Client.activeChat ){
+                            
+                            return [
+                                '<button type="button" class="btn btn-primary">',
+                                    session.title,
+                                '</button>'
+                            ].join('');
+
+                        } else {
+
+                            return [
+                                '<button type="button" class="btn btn-outline-secondary" onclick="Client.action.setActiveChat(', index ,')">',
+                                    session.title,
+                                '</button>'
+                            ].join('');
+
+                        }
+
+                    });
+
+                    Client.element.chats.innerHTML = html.join('');
+                },
+
+                snippets: contexts => {
+                    var html = contexts.map(context => [
+                        '<div class="card">',
+                            '<div class="card-body">',
+                                '<h5 class="card-title">', context.id ,'</h5>',
+                                '<p class="card-text">', context.text ,'</p>',
+                                '<a href="', context.url ,'" target="_blank" class="card-link">Open Source</a>',
+                            '</div>',
+                        '</div>'
+                    ].join(''));
+
+                    Client.element.snippets.innerHTML = html.join('');
+                }
+
+            },
+
+            action: {
+
+                newSession: () => {
+                    Client.activeChat++;
+                    Client.chats.push({
+                        'title': 'New Chat',
+                        'messages': []
+                    });
+                    Client.render.chat( Client.activeChat );
+                    Client.render.sessions();
+                    Client.render.snippets( [] );
+                    Client.element.input.focus();
+                },
+
+                send: () => {
+
+                    if( Client.element.input.value.trim() == '' ){
+                        Client.element.input.focus();
+                        return;
+                    }
+
+                    Client.element.input.setAttribute('disabled', 'disabled');
+
+                    let message = {
+                        'role': 'user',
+                        'content': Client.element.input.value
+                    };
+
+                    let session = Client.chats[ Client.activeChat ];
+                    session.messages.push( message );
+                    Client.render.chat( Client.activeChat );
+
+                    if( session.title == 'New Chat' ){
+                        session.title = message.content.slice(0, 50);
+                        Client.render.sessions();
+                    }
+
+                    // Call RAG
+
+                    var response = {
+                        'role': 'assistant',
+                        'content': 'Hello',
+                        'contexts': [
+                            {
+                                'id': 'ID1',
+                                'url': 'https://www.google.com',
+                                'text': 'Text context used'
+                            }
+                        ]
+                    };
+
+                    session.messages.push( response );
+                    Client.render.chat( Client.activeChat );
+                    Client.render.snippets( response.contexts );
+
+                    Client.element.input.value = '';
+                    Client.element.input.removeAttribute('disabled');
+                    Client.element.input.focus();
+                },
+
+                setActiveChat: indexChat => {
+                    Client.activeChat = indexChat;
+                    Client.render.sessions();
+                    Client.render.chat( indexChat );
+                    Client.render.snippets( [] );
+                    Client.element.input.value = '';
+                    Client.element.input.focus();
+                },
+
+                mic: () => {
+
+                    let recognization = new webkitSpeechRecognition();
+
+                    recognization.onstart = () => {
+                        Client.element.input.value = 'Listening ...';
+                        Client.element.input.setAttribute('disabled', 'disabled');
+                    };
+
+                    recognization.onresult = event => {
+                        Client.element.input.value = event.results[0][0].transcript;
+                        Client.element.input.removeAttribute('disabled');
+                        Client.element.input.focus;
+                    };
+
+                    recognization.start();
+                },
+
+                settings: () => {
+                    alert('TODO');
+                },
+
+                message: {
+                    speak: (indexChat, indexMessage) => {
+                        let synthesis = new SpeechSynthesisUtterance();
+                        synthesis.text = Client.chats[ indexChat ].messages[ indexMessage ].content;
+                        window.speechSynthesis.speak(synthesis);
+                    },
+                    copy: (indexChat, indexMessage) => {
+
+                        let tempElement = document.createElement('INPUT');
+                        tempElement.setAttribute('type', 'text');
+                        tempElement.setAttribute('value', Client.chats[ indexChat ].messages[ indexMessage ].content);
+
+                        document.body.appendChild( tempElement );
+
+                        tempElement.select();
+                        tempElement.setSelectionRange(0, 99999);
+                        navigator.clipboard.writeText(tempElement.value);
+
+                        document.body.removeChild(tempElement);
+
+                    },
+                    feedback: (indexChat, indexMessage, polarity) => {
+                        alert('TODO');
+                    }
+                }
+
+            },
+
+            init : () => {
+                document.getElementById('button-new-chat').onclick = Client.action.newSession;
+                document.getElementById('button-send').onclick = Client.action.send;
+                document.getElementById('button-mic').onclick = Client.action.mic;
+                document.getElementById('button-settings').onclick = Client.action.settings;
+                Client.action.newSession();
+                feather.replace(); // Ico render
+            }
+        };
+        window.onload = Client.init();
+    </script>
+</body>
+
+</html>
