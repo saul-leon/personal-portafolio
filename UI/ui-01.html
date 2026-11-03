@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Web App</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  >
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    rel="stylesheet"
+  >
+  <style>
+    /* ===== Full-height page ===== */
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-pane.show {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .tab-pane:not(.show) {
+      display: none;
+    }
+
+    /* ===== Sidebar Layout ===== */
+    .sidebar-layout {
+      display: flex;
+      flex: 1;
+      height: 100%;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 340px;
+      min-width: 340px;
+      display: flex;
+      border-right: 1px solid #dee2e6;
+      background: #f8f9fa;
+      transition: width 0.3s ease, min-width 0.3s ease;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: 56px;
+      min-width: 56px;
+    }
+
+    /* ===== Sidebar Dock (icon column) ===== */
+    .sidebar-dock {
+      width: 56px;
+      min-width: 56px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 12px;
+      gap: 16px;
+      border-right: 1px solid #dee2e6;
+      background: #e9ecef;
+    }
+
+    .dock-icon {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .dock-icon:hover {
+      background: #ced4da;
+    }
+
+    .dock-icon.active {
+      background: #0d6efd;
+      color: #fff;
+    }
+
+    /* ===== Sidebar Content ===== */
+    .sidebar-content {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      transition: opacity 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.collapsed .sidebar-content {
+      display: none;
+    }
+
+    .sidebar-section {
+      display: none;
+    }
+
+    .sidebar-section.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* ===== Main Panel ===== */
+    .main-panel {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== Main Toolbar (bottom center) ===== */
+    .main-toolbar {
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding-top: 16px;
+      flex-shrink: 0;
+    }
+
+    .toolbar-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #dee2e6;
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+    .toolbar-btn:hover {
+      background: #e9ecef;
+      border-color: #adb5bd;
+      transform: scale(1.1);
+    }
+
+    .toolbar-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* ===== Pages Grid (LIST_OF_IMAGES) ===== */
+    .pages-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .page-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .page-image {
+      width: 228px;
+      height: 296px;
+      border: 1px solid #adb5bd;
+      border-radius: 4px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #495057;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    .page-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .page-card.selected .page-image {
+      border: 2px solid #0d6efd;
+    }
+
+    .page-image .page-title {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      background: rgba(255, 255, 255, 0.5);
+      color: #000;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .page-image .tag-status {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+    }
+
+    .page-image .tag-type {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+    }
+
+    .tag-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      background: #d1e7dd;
+      color: #0f5132;
+      border: 1px solid #a3cfbb;
+    }
+
+    .tag-type {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      background: #cfe2ff;
+      color: #084298;
+      border: 1px solid #9ec5fe;
+    }
+
+    #filter-results,
+    #search-results {
+        flex: 1;
+        min-height: 0;
+        overflow: auto;
+    }
+
+    /* ===== Comments Section ===== */
+    #section-2.active {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+
+    #comments-history {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 8px;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+
+    #comments-history .comment-item {
+      padding: 6px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    #comments-history .comment-item:last-child {
+      border-bottom: none;
+    }
+
+    #comments-history .comment-meta {
+      font-size: 12px;
+      color: #6c757d;
+    }
+
+    #comments-history .comment-text {
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    #comments-input-area {
+      flex-shrink: 0;
+    }
+
+    /* ===== Zoom In Modal ===== */
+    #zoom-in-modal .modal-content {
+      border: none;
+    }
+
+    #zoom-in-image {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    #zoom-in-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1060;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: #dc3545;
+      color: #fff;
+      font-size: 20px;
+      font-weight: bold;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    #zoom-in-close:hover {
+      background: #b02a37;
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header / Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">My Web App</a>
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container-fluid mt-2">
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link active"
+          id="tab-1-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#tab-1"
+          type="button"
+          role="tab"
+          aria-controls="tab-1"
+          aria-selected="true"
+        >
+          Tab-1
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button
+          class="nav-link"
+          id="tab-2-tab"
+          data-bs-toggle="tab"
+          data-bs-target="#tab-2"
+          type="button"
+          role="tab"
+          aria-controls="tab-2"
+          aria-selected="false"
+        >
+          Tab-2
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content">
+
+      <!-- Tab 1 -->
+      <div
+        class="tab-pane fade show active"
+        id="tab-1"
+        role="tabpanel"
+        aria-labelledby="tab-1-tab"
+      >
+        <div class="sidebar-layout">
+          <!-- Sidebar -->
+          <aside class="sidebar" id="sidebar">
+            <div class="sidebar-dock">
+              <button class="dock-icon" id="btn-chevron" title="Toggle sidebar">
+                <i class="bi bi-chevron-double-left"></i>
+              </button>
+              <button class="dock-icon active" id="btn-section1" title="Section 1">
+                <i class="bi bi-search"></i>
+              </button>
+              <button class="dock-icon" id="btn-section2" title="Section 2">
+                <i class="bi bi-chat-dots"></i>
+              </button>
+            </div>
+            <div class="sidebar-content">
+              <div class="sidebar-section active" id="section-1">
+
+                <!-- Tab Navigation -->
+                <ul class="nav nav-tabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button
+                      class="nav-link active"
+                      id="section1-filter-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#section1-filter-pane"
+                      type="button"
+                      role="tab"
+                      aria-controls="section1-filter-pane"
+                      aria-selected="true"
+                    >
+                      Filter
+                    </button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button
+                      class="nav-link"
+                      id="section1-search-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#section1-search-pane"
+                      type="button"
+                      role="tab"
+                      aria-controls="section1-search-pane"
+                      aria-selected="false"
+                    >
+                      Search
+                    </button>
+                  </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content pt-2">
+                  <!-- Filter-1 -->
+                  <div
+                    class="tab-pane fade show active"
+                    id="section1-filter-pane"
+                    role="tabpanel"
+                    aria-labelledby="section1-filter-tab"
+                  >
+                    <!-- Date Filter -->
+                    <div class="mb-3">
+                      <label for="filter-date" class="form-label">Date</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        id="filter-date"
+                      >
+                    </div>
+
+                    <!-- Origin Filter -->
+                    <div class="mb-3">
+                      <label for="filter-origin" class="form-label">Origin</label>
+                      <select
+                        class="form-select"
+                        id="filter-origin"
+                      >
+                        <option value="" selected>(All)</option>
+                        <option value="alfa">Alfa</option>
+                        <option value="beta">Beta</option>
+                      </select>
+                    </div>
+
+                    <!-- Type Filter -->
+                    <div class="mb-3">
+                      <label for="filter-type" class="form-label">Type</label>
+                      <select
+                        class="form-select"
+                        id="filter-type"
+                      >
+                        <option value="" selected>(All)</option>
+                        <option value="one">One</option>
+                        <option value="two">Two</option>
+                      </select>
+                    </div>
+
+                    <div id="filter-results" class="mt-2">
+                      <div class="pages-grid">
+
+                        <!-- Page 1 -->
+                        <div class="page-card selected" data-page="1">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 1">
+                            <div class="page-title">Page 1</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 2 -->
+                        <div class="page-card" data-page="2">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 2">
+                            <div class="page-title">Page 2</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 3 -->
+                        <div class="page-card" data-page="3">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 3">
+                            <div class="page-title">Page 3</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 4 -->
+                        <div class="page-card" data-page="4">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 4">
+                            <div class="page-title">Page 4</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 5 -->
+                        <div class="page-card" data-page="5">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 5">
+                            <div class="page-title">Page 5</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Filter-2 -->
+                  <div
+                    class="tab-pane fade"
+                    id="section1-search-pane"
+                    role="tabpanel"
+                    aria-labelledby="section1-search-tab"
+                  >
+                    <div class="input-group mb-3">
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="search-input"
+                        placeholder="Enter search text..."
+                      >
+                      <button
+                        class="btn btn-primary"
+                        type="button"
+                        id="btn-search"
+                      >
+                        Search
+                      </button>
+                    </div>
+                    <div id="search-results" class="mt-2">
+                      <div class="pages-grid">
+
+                        <!-- Page 1 -->
+                        <div class="page-card" data-page="1">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 1">
+                            <div class="page-title">Page 1</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 2 -->
+                        <div class="page-card" data-page="2">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 2">
+                            <div class="page-title">Page 2</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 3 -->
+                        <div class="page-card" data-page="3">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 3">
+                            <div class="page-title">Page 3</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 4 -->
+                        <div class="page-card" data-page="4">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 4">
+                            <div class="page-title">Page 4</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                        <!-- Page 5 -->
+                        <div class="page-card" data-page="5">
+                          <div class="page-image">
+                            <img src="https://placehold.co/228x296/png" alt="Page 5">
+                            <div class="page-title">Page 5</div>
+                            <span class="tag tag-status">status: OK</span>
+                            <span class="tag tag-type">type: One</span>
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="sidebar-section" id="section-2">
+                <h4>Comments</h4>
+
+                <!-- Top: History of messages -->
+                <div id="comments-history">
+                  <div class="comment-item">
+                    <div class="comment-meta"><strong>User 1</strong> — 2026-10-01 09:15</div>
+                    <div class="comment-text">quick fox ...</div>
+                  </div>
+                  <div class="comment-item">
+                    <div class="comment-meta"><strong>User 1</strong> — 2026-10-05 14:32</div>
+                    <div class="comment-text">quick fox ...</div>
+                  </div>
+                  <div class="comment-item">
+                    <div class="comment-meta"><strong>User 1</strong> — 2026-10-12 08:47</div>
+                    <div class="comment-text">quick fox ...</div>
+                  </div>
+                  <div class="comment-item">
+                    <div class="comment-meta"><strong>User 1</strong> — 2026-10-20 11:03</div>
+                    <div class="comment-text">quick fox ...</div>
+                  </div>
+                  <div class="comment-item">
+                    <div class="comment-meta"><strong>User 1</strong> — 2026-11-01 16:55</div>
+                    <div class="comment-text">quick fox ...</div>
+                  </div>
+                </div>
+
+                <!-- Bottom: Input new comment and update status -->
+                <div id="comments-input-area">
+                  <div class="mb-2">
+                    <textarea
+                      class="form-control"
+                      id="comment-textarea"
+                      rows="3"
+                      placeholder="Write a comment..."
+                    ></textarea>
+                  </div>
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <button
+                      class="btn btn-primary btn-sm"
+                      id="btn-post-comment"
+                      type="button"
+                    >
+                      Post
+                    </button>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <select
+                      class="form-select form-select-sm"
+                      id="status-select"
+                    >
+                      <option value="CORRECT">CORRECT</option>
+                      <option value="INCORRECT">INCORRECT</option>
+                    </select>
+                    <button
+                      class="btn btn-outline-primary btn-sm"
+                      id="btn-update-status"
+                      type="button"
+                    >
+                      Update
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <!-- Main Panel -->
+          <div class="main-panel" id="main-panel">
+            <h2 id="page-title" class="text-center">Page N</h2>
+            <p id="page-indicator" class="text-muted text-center">Origin: Alfa | Type: Two</p>
+            <p id="page-path" class="text-secondary text-center"><i class="bi bi-folder me-1"></i>/ 2026 / 11 / 03 / MY / PATH / Page N</p>
+            <table class="table table-bordered table-sm">
+              <thead>
+                <tr>
+                  <th>Col 1</th>
+                  <th>Col 2</th>
+                  <th>Col 3</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+                <tr><td>1</td><td>2</td><td>3</td></tr>
+              </tbody>
+            </table>
+
+            <!-- Bottom Toolbar -->
+            <div class="main-toolbar" id="main-toolbar">
+              <button class="toolbar-btn" title="Open" data-action="open">
+                <i class="bi bi-folder2-open"></i>
+              </button>
+              <button class="toolbar-btn" title="Copy" data-action="copy">
+                <i class="bi bi-copy"></i>
+              </button>
+              <button class="toolbar-btn" title="Cut" data-action="cut">
+                <i class="bi bi-scissors"></i>
+              </button>
+              <button class="toolbar-btn" title="Paste" data-action="paste">
+                <i class="bi bi-clipboard"></i>
+              </button>
+              <button class="toolbar-btn" title="Zoom In" data-action="zoom-in">
+                <i class="bi bi-zoom-in"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2 -->
+      <div
+        class="tab-pane fade pt-2"
+        id="tab-2"
+        role="tabpanel"
+        aria-labelledby="tab-2-tab"
+      >
+        <div class="alert alert-warning" role="alert">
+          <h4 class="alert-heading">Tab-2 Content</h4>
+          <p>This is a placeholder area for Tab-2 content. Replace this warning alert with your actual content.</p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Zoom In Modal -->
+  <div
+    class="modal fade"
+    id="zoom-in-modal"
+    tabindex="-1"
+    aria-labelledby="zoom-in-modal-label"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-fullscreen">
+      <div class="modal-content bg-dark">
+        <button
+          type="button"
+          id="zoom-in-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        >
+          &times;
+        </button>
+        <div class="modal-body d-flex align-items-center justify-content-center p-0">
+          <img
+            id="zoom-in-image"
+            src="https://placehold.co/912x1184/png"
+            alt="Zoomed image"
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle (includes Popper) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Sidebar logic (basic JS, no Bootstrap) -->
+  <script>
+    const sidebar     = document.getElementById('sidebar');
+    const btnChevron  = document.getElementById('btn-chevron');
+    const btnSection1 = document.getElementById('btn-section1');
+    const btnSection2 = document.getElementById('btn-section2');
+    const section1    = document.getElementById('section-1');
+    const section2    = document.getElementById('section-2');
+
+    // Toggle collapse / expand
+    btnChevron.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Section 1 (Search)
+    btnSection1.addEventListener('click', () => {
+      btnSection1.classList.add('active');
+      btnSection2.classList.remove('active');
+      section1.classList.add('active');
+      section2.classList.remove('active');
+      // Auto-expand sidebar when clicking a section icon while collapsed
+      sidebar.classList.remove('collapsed');
+    });
+
+    // Section 2 (Comment)
+    btnSection2.addEventListener('click', () => {
+      btnSection2.classList.add('active');
+      btnSection1.classList.remove('active');
+      section2.classList.add('active');
+      section1.classList.remove('active');
+      // Auto-expand sidebar when clicking a section icon while collapsed
+      sidebar.classList.remove('collapsed');
+    });
+
+    // Zoom In modal
+    const zoomInModalEl = document.getElementById('zoom-in-modal');
+    const zoomInModal   = new bootstrap.Modal(zoomInModalEl);
+    document.querySelector('[data-action="zoom-in"]').addEventListener('click', () => {
+      zoomInModal.show();
+    });
+  </script>
+</body>
+</html>
